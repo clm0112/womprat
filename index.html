@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Womp Rat Debug Quest</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&family=Audiowide&family=Quicksand:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --card: #0f1621;
+      --text: #e6edf3;
+      --sub: #9fb0c0;
+      --accent: #00f0ff;
+      --accent2: #eab308;
+      --ok: #22c55e;
+      --danger: #ff5a5a;
+      --border: #243445;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Orbitron', 'Audiowide', 'Quicksand', 'Fira Mono', 'Consolas', 'Monaco', monospace;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      justify-content: center;
+    }
+    .stars {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: radial-gradient(#ffffff 1px, transparent 1px);
+      background-size: 3px 3px;
+      opacity: .045;
+      animation: drift 90s linear infinite;
+    }
+    @keyframes drift {
+      from { background-position: 0 0; }
+      to   { background-position: -1000px 500px; }
+    }
+    .crt::before {
+      content: "";
+      position: fixed; inset: 0; pointer-events: none;
+      background-image: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.06) 0px,
+        rgba(255,255,255,0.06) 1px,
+        transparent 2px,
+        transparent 3px
+      );
+      mix-blend-mode: overlay;
+      opacity: .08;
+      z-index: 1;
+    }
+    .holo {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+      border: 1px solid var(--border);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.06) inset,
+        0 0 18px var(--accent)30,
+        0 0 2px var(--accent)80 inset;
+      backdrop-filter: blur(6px);
+    }
+    .pixelated { image-rendering: pixelated; }
+    @keyframes rat-bounce { 0%{transform:translateY(0)} 35%{transform:translateY(-6px)} 70%{transform:translateY(0)} 100%{transform:translateY(-2px)} }
+    @keyframes rat-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px)} 50%{transform:translateX(3px)} 75%{transform:translateX(-2px)} }
+    .planet-map { border-radius: 16px; padding: 12px; margin-bottom: 16px; }
+    .planet-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .planet-tile {
+      padding: 8px 10px; border-radius: 12px; text-align: center;
+      border: 1px solid var(--border); background: #0b131c; color: var(--sub); font-size: 12px;
+    }
+    .planet-done {
+      background: #0f2430; color: var(--text);
+      box-shadow: 0 0 10px var(--accent)50 inset;
+    }
+    #particles { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+    .part {
+      position: absolute; transform: translate(-50%,-50%); user-select: none;
+      filter: drop-shadow(0 0 6px rgba(255,255,255,.25));
+    }
+    .codex {
+      position: fixed; right: 16px; bottom: 16px; z-index: 11;
+      padding: 12px 14px; border-radius: 14px; max-width: 340px;
+      display: flex; gap: 10px; align-items: center;
+    }
+    body {
+      background: #181c24;
+      color: #b8eaff;
+      font-family: 'Orbitron', 'Audiowide', 'Quicksand', 'Fira Mono', 'Consolas', 'Monaco', monospace;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      justify-content: center;
+    }
+    .terminal-container {
+      background: #1a212b;
+      border-radius: 16px;
+      box-shadow: 0 0 32px #00bfff44, 0 2px 24px #000a;
+      width: 540px;
+      max-width: 95vw;
+      margin-top: 0;
+      padding: 32px 32px 24px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      border: 2px solid #00bfff;
+      position: relative;
+    }
+    .terminal-header {
+      color: #00bfff;
+      font-size: 1.2em;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+      font-family: 'Orbitron', 'Audiowide', sans-serif;
+      text-shadow: 0 0 8px #00bfff88;
+    }
+    .terminal-question {
+      background: #181c24;
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 1.08em;
+      margin-bottom: 18px;
+      border-left: 4px solid #00bfff;
+      white-space: pre-line;
+      color: #b8eaff;
+      box-shadow: 0 0 8px #00bfff22;
+      font-family: 'Orbitron', 'Audiowide', 'Quicksand', monospace;
+      text-shadow: 0 0 8px #00bfff88;
+    }
+    .terminal-input-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .terminal-input {
+      flex: 1;
+      background: #181c24;
+      color: #b8eaff;
+      border: 2px solid #00bfff;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 1.08em;
+      outline: none;
+      box-shadow: 0 0 12px #00bfff44 inset;
+      transition: border 0.2s, box-shadow 0.2s;
+      font-family: 'Orbitron', 'Audiowide', 'Quicksand', monospace;
+      text-shadow: 0 0 8px #00bfff88;
+    }
+    .terminal-input:focus {
+      border-color: #00eaff;
+      box-shadow: 0 0 16px #00eaff88;
+    }
+    .run-btn, .reset-btn {
+      background: #181c24;
+      color: #00bfff;
+      border: 2px solid #00bfff;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 0.98em;
+      cursor: pointer;
+      font-family: 'Orbitron', 'Audiowide', sans-serif;
+      box-shadow: 0 0 8px #00bfff44;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s, color 0.2s, border 0.2s;
+    }
+    .run-btn:hover, .reset-btn:hover {
+      background: #00bfff;
+      color: #181c24;
+      border-color: #00eaff;
+    }
+    .result-area {
+      min-height: 32px;
+      font-size: 1.08em;
+      margin-bottom: 10px;
+      color: #ffb8b8;
+      font-family: 'Orbitron', 'Audiowide', 'Quicksand', monospace;
+      text-shadow: 0 0 12px #ffb800, 0 0 8px #ffb80088;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .result-area.success {
+      color: #00ffae;
+      text-shadow: 0 0 12px #00ffae, 0 0 8px #00ffae88;
+    }
+    .result-area.warning {
+      color: #ffb800;
+      text-shadow: 0 0 12px #ffb800, 0 0 8px #ffb80088;
+    }
+    .result-area.error {
+      color: #ff2a2a;
+      text-shadow: 0 0 16px #ff2a2a, 0 0 8px #ff2a2a88;
+    }
+    .hint-area {
+      color: #00eaff;
+      font-family: 'Orbitron', 'Audiowide', 'Quicksand', monospace;
+      text-shadow: 0 0 12px #00eaff, 0 0 8px #00eaff88;
+      font-size: 1em;
+      margin-top: 6px;
+      margin-bottom: 2px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    .next-arrow {
+      display: none;
+      align-self: flex-end;
+      background: none;
+      border: none;
+      color: #00bfff;
+      font-size: 2.2em;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: color 0.2s, text-shadow 0.2s;
+      text-shadow: 0 0 12px #00bfff88;
+    }
+    .next-arrow:hover {
+      color: #00eaff;
+      text-shadow: 0 0 16px #00eaffcc;
+    }
+    .hint-btn {
+      position: absolute;
+      top: 12px;
+      right: 18px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.7em;
+      color: #64748b;
+      transition: color 0.2s, text-shadow 0.2s;
+      z-index: 2;
+      outline: none;
+      text-shadow: 0 0 8px #facc15aa;
+    }
+    .hint-btn.active {
+      color: #facc15;
+      text-shadow: 0 0 16px #facc15cc;
+    }
+    .hint-btn:disabled {
+      color: #243445;
+      cursor: not-allowed;
+      text-shadow: none;
+    }
+    .wrdq-title {
+      color: #ffd700;
+      margin-top: 32px;
+      font-family: 'Starjedi', 'Eurostar-Regular', 'Old_R', 'Orbitron', 'Audiowide', sans-serif;
+      text-shadow: 0 0 24px #ffd700cc, 0 0 8px #eab308;
+      font-size: 2.2em;
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="stars"></div>
+  <div id="particles"></div>
+  <!-- Sector Progress removed -->
+    <div class="swtor-panel holo" id="main-terminal">
+      <button id="close-btn" title="Close" class="swtor-close-btn">
+        <svg width="28" height="28" viewBox="0 0 28 28" style="vertical-align:middle;">
+          <circle cx="14" cy="14" r="12" fill="#00bfff" stroke="#ffe066" stroke-width="2"/>
+          <path d="M9 9l10 10M19 9l-10 10" stroke="#ffe066" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="swtor-header">
+        <span class="swtor-header-title">Womp Rat Debug Quest</span>
+      </div>
+      <div class="swtor-divider"></div>
+      <div class="swtor-content">
+        <div class="terminal-scroll" id="terminal-scroll"></div>
+        <div class="swtor-input-row compact">
+          <span class="swtor-glyph">&gt;</span>
+          <span class="swtor-editable" id="terminal-input" contenteditable="true" spellcheck="false" data-placeholder="Type your answer and press Enter..."></span>
+          <img src="assets/images/ratpanion.png" alt="Ratpanion" class="ratpanion-inline" />
+        </div>
+      </div>
+    </div>
+  <!-- Removed duplicate swtor-content and input row -->
+  <script src="renderer.js"></script>
+  <script>
+    // Close button logic for Electron (IPC)
+    const closeBtn = document.getElementById('close-btn');
+    if (closeBtn && window.require) {
+      const { ipcRenderer } = window.require('electron');
+      closeBtn.onclick = () => {
+        ipcRenderer.send('close-window');
+      };
+    }
+  </script>
+  <script>
+    // Planet map rendering
+    const PLANETS = [
+      "Korriban","Dromund Kaas","Tython","Nar Shaddaa","Imperial Logistics",
+      "Alderaan","Core Worlds","Coruscant","Kuat","Czerka",
+      "Holocron","Lightning","Archives","CZ-198","Infinite Empire",
+      "Dantooine","Spire","Ilum","Treasury","Tatooine"
+    ];
+    function renderPlanets(solvedCount) {
+      const grid = document.getElementById("planetGrid");
+      grid.innerHTML = "";
+      PLANETS.forEach((name, i) => {
+        const div = document.createElement("div");
+        div.className = "planet-tile holo " + (i < solvedCount ? "planet-done" : "");
+        div.textContent = (i < solvedCount ? "🟢 " : "⚪ ") + name;
+        grid.appendChild(div);
+      });
+    }
+    // Confetti particles
+    let PARTICLES_ON = true;
+    const parts = [];
+    function tickParticles() {
+      for (let i=parts.length-1;i>=0;i--) {
+        const p = parts[i];
+        p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.life -= 0.02;
+        p.el.style.left = p.x+"px"; p.el.style.top = p.y+"px"; p.el.style.opacity = Math.max(p.life,0);
+        if (p.life <= 0) { p.el.remove(); parts.splice(i,1); }
+      }
+      requestAnimationFrame(tickParticles);
+    }
+    function burst(x, y) {
+      if (!PARTICLES_ON) return;
+      const chars = ["✨","🎉","💫","🛠️","✦"];
+      for (let i=0;i<18;i++) {
+        const a = (Math.PI*2/18)*i + Math.random()*0.5;
+        const s = 1.5 + Math.random()*1.2;
+        const el = document.createElement("div");
+        el.className = "part";
+        el.style.position = "absolute";
+        el.style.left = x+"px"; el.style.top = y+"px";
+        el.style.fontSize = (12+Math.random()*6)+"px";
+        el.textContent = chars[Math.floor(Math.random()*chars.length)];
+        document.getElementById("particles").appendChild(el);
+        parts.push({ el, x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s - 1.5, life: 1 });
+      }
+    }
+    // Codex popup
+    let codexTimer = null;
+    function showCodex(text) {
+      if (!text) return;
+      const old = document.getElementById("codex");
+      if (old) old.remove();
+      const box = document.createElement("div");
+      box.id = "codex";
+      box.className = "holo codex";
+      box.innerHTML = `<div style="font-size:22px;filter:drop-shadow(0 0 6px rgba(255,255,255,.3))">📜</div>
+                       <div style="color:var(--text);font-weight:600;margin-bottom:2px">Codex entry unlocked</div>
+                       <div style="color:var(--sub);width:100%">${text}</div>`;
+      document.body.appendChild(box);
+      if (codexTimer) clearTimeout(codexTimer);
+      codexTimer = setTimeout(()=>box.remove(), 3600);
+    }
+    // CRT toggle
+    document.body.classList.remove('crt');
+    // Bootstrap particles
+    requestAnimationFrame(tickParticles);
+    // Expose for renderer.js
+    window.renderPlanets = renderPlanets;
+    window.burst = burst;
+    window.showCodex = showCodex;
+  </script>
+</body>
+</html>
